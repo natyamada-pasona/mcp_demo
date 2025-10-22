@@ -1,0 +1,68 @@
+name: バックエンド実装（フォーム）
+description: バックエンド実装タスクの詳細を構造化して入力するフォーム
+title: ''
+labels: backend
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: 概要
+      description: 変更の概要を短く書いてください
+      placeholder: "例: ユーザー通知APIの追加"
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: 詳細
+      description: 実装案、設計、考慮事項などを詳述してください
+      placeholder: "データフローや想定するモジュール"
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 優先度
+      options:
+        - 高
+        - 中
+        - 低
+      required: true
+  - type: dropdown
+    id: env
+    attributes:
+      label: 対象環境
+      options:
+        - staging
+        - production
+        - both
+      required: true
+  - type: input
+    id: api_endpoints
+    attributes:
+      label: 関連 API エンドポイント
+      description: "追加・変更するエンドポイントを記載してください（カンマ区切り可）"
+  - type: textarea
+    id: database_changes
+    attributes:
+      label: データベース変更
+      description: "追加/変更されるテーブルやマイグレーション手順を記載"
+  - type: checkboxes
+    id: tests
+    attributes:
+      label: テスト要件
+      options:
+        - label: 単体テスト
+          value: unit
+        - label: 結合テスト
+          value: integration
+        - label: E2E
+          value: e2e
+  - type: input
+    id: related
+    attributes:
+      label: 関連Issue/PR
+      description: "関連するIssueやPRの番号やURL"
+  - type: textarea
+    id: rollout
+    attributes:
+      label: デプロイ/ロールアウト手順
+      description: "実施手順や注意点を記載"

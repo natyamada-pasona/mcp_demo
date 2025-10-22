@@ -1,0 +1,70 @@
+name: フロントエンド実装（フォーム）
+description: フロントエンド実装タスクの詳細を構造化して入力するフォーム
+title: ''
+labels: frontend
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: 概要
+      description: 変更の概要を短く書いてください
+      placeholder: "例: 新規ダッシュボード画面の実装"
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: 詳細
+      description: 実装案、使用するコンポーネント、状態管理の考え方などを記載
+      placeholder: "使用するフレームワーク、重要な設計決定など"
+      required: true
+  - type: input
+    id: design_links
+    attributes:
+      label: デザイン/ワイヤーフレーム
+      description: Figma や画像の URL を貼ってください
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 優先度
+      options:
+        - 高
+        - 中
+        - 低
+      required: true
+  - type: checkboxes
+    id: browsers
+    attributes:
+      label: 対応ブラウザ
+      options:
+        - label: Chrome
+          value: chrome
+        - label: Safari
+          value: safari
+        - label: Firefox
+          value: firefox
+        - label: Edge
+          value: edge
+  - type: dropdown
+    id: accessibility
+    attributes:
+      label: アクセシビリティ要件
+      options:
+        - WCAG AA
+        - WCAG A
+        - なし
+  - type: checkboxes
+    id: tests
+    attributes:
+      label: テスト要件
+      options:
+        - label: ユニットテスト
+          value: unit
+        - label: E2Eテスト
+          value: e2e
+        - label: スナップショット
+          value: snapshot
+  - type: input
+    id: related
+    attributes:
+      label: 関連Issue/PR
+      description: 関連するIssueやPRの番号やURL
