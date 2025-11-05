@@ -1,0 +1,139 @@
+name: Auto assign pull requests
+run-name: Auto assign pull requests for "${{ github.head_ref }}@${{ github.event.pull_request.head.sha }}"
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+
+jobs:
+  assign:
+    name: Assign assignees and reviewers
+    if: github.event.label.name == 'assign-reviewer'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0  
+
+      - name: Assign Pull Request Author as Assignee
+        uses: actions/github-script@v6
+        if: ${{ toJSON(github.event.pull_request.assignees) == '[]' }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { number, user } = context.payload.pull_request;
+            try {
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: number,
+                assignees: [user.login]
+              });
+            } catch (error) {
+              console.error('Error assigning assignees:', error);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: number,
+                body: `:exclamation:️**Error assigning assignees:** ${error.message}`
+              });
+            }
+
+      - name: Assign random reviewers
+        uses: actions/github-script@v6
+        if: ${{ toJSON(github.event.pull_request.requested_reviewers) == '[]' }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            let groups;
+            try {
+              groups = JSON.parse(fs.readFileSync(`./.github/workflows/config/reviewer_groups.json`, 'utf8'));
+            } catch (error) {
+              console.error('Error reading or parsing reviewer_groups.json:', error);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: `:exclamation:️**Error reading reviewer groups:** ${error.message}`
+              });
+              return;
+            }
+
+            const author = context.payload.pull_request.user.login;
+            const reviewers = [];
+
+            for (const [group, members] of Object.entries(groups)) {
+              const filteredMembers = members.filter(user => user !== author);
+              if (filteredMembers.length > 0) {
+                const randomReviewer = filteredMembers[Math.floor(Math.random() * filteredMembers.length)];
+                reviewers.push(randomReviewer);
+              }
+            }
+
+            if (reviewers.length === 0) {
+              console.warn('No available reviewers found.');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: `:exclamation:️**No available reviewers found.**`
+              });
+              return;
+            }
+
+            try {
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                reviewers
+              });
+            } catch (error) {
+              console.error('Error assigning reviewers:', error);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: `:exclamation:️**Error assigning reviewers:** ${error.message}`
+              });
+            }
+
+      - name: Remove 'assign-reviewer' label
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+
+            try {
+              await github.rest.issues.removeLabel({
+                owner,
+                repo,
+                issue_number,
+                name: 'assign-reviewer'
+              });
+              console.log(`Successfully removed 'assign-reviewer' label.`);
+            } catch (error) {
+              if (error.status === 404) {
+                console.warn(`Label 'assign-reviewer' not found. Skipping removal.`);
+              } else {
+                console.error(`Error removing 'assign-reviewer' label:`, error);
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number,
+                  body: `:exclamation:️**Error removing 'assign-reviewer' label:** ${error.message}`
+                });
+                throw error;
+              }
+            }
